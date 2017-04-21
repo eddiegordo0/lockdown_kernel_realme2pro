@@ -346,7 +346,7 @@ void sched_clock_idle_sleep_event(void)
 EXPORT_SYMBOL_GPL(sched_clock_idle_sleep_event);
 
 /*
- * We just idled; resync with ktime. (called with irqs disabled):
+ * We just idled; resync with ktime.
  */
 void sched_clock_idle_wakeup_event(void)
 {
@@ -360,6 +360,7 @@ void sched_clock_idle_wakeup_event(void)
 
 	local_irq_save(flags);
 	sched_clock_tick();
+	local_irq_restore(flags);
 }
 EXPORT_SYMBOL_GPL(sched_clock_idle_wakeup_event);
 
