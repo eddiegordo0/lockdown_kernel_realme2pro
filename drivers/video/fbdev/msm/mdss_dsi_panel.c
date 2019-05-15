@@ -22,6 +22,7 @@
 #include <linux/qpnp/pwm.h>
 #include <linux/err.h>
 #include <linux/string.h>
+#include <linux/display_state.h>
 
 #include "mdss_dsi.h"
 #include "mdss_dba_utils.h"
@@ -102,6 +103,14 @@ int seed_mode = SEED_CLOSED_MODE;
 //add for lcd esd recovery power off when tp black gesture open
 int lcd_esd_status = 1;
 #endif /*CONFIG_PRODUCT_REALME_RMX1801*/
+
+bool display_on = true;
+
+bool is_display_on()
+{
+	return display_on;
+}
+
 DEFINE_LED_TRIGGER(bl_led_trigger);
 
 #ifdef CONFIG_PRODUCT_REALME_RMX1801
@@ -109,7 +118,7 @@ DEFINE_LED_TRIGGER(bl_led_trigger);
 //add for panel vendor
 int lcd_vendor=0;
 int is_lcd(OPPO_LCD lcd_num){
-   return (lcd_vendor == lcd_num ? 1:0);
+    return (lcd_vendor == lcd_num ? 1:0);
 }
 #endif /*CONFIG_PRODUCT_REALME_RMX1801*/
 
@@ -2324,6 +2333,8 @@ static int mdss_dsi_panel_low_power_config(struct mdss_panel_data *pdata,
 		pr_err("%s: Invalid input data\n", __func__);
 		return -EINVAL;
 	}
+
+	display_on = true;
 
 	pinfo = &pdata->panel_info;
 	ctrl = container_of(pdata, struct mdss_dsi_ctrl_pdata,
