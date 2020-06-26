@@ -58,7 +58,7 @@ ssize_t fts_i2c_wr_show(struct device *dev, struct device_attribute *attr,
 	snprintf(buff, sizeof(buff), "{");
 	strlcat(Out_buff, buff,  ARRAY_SIZE(Out_buff));
 	for (i = 0; i < (byte_count_read+2); i++) {
-		if (!i) {
+		if (i == 0) {
 			char temp_byte_count_read = (byte_count_read >> 8) & 0xFF;
 			snprintf(buff, sizeof(buff), "%02X", temp_byte_count_read);
 		} else if (i == 1) {
@@ -125,55 +125,55 @@ ssize_t fts_i2c_wr_store(struct device *dev, struct device_attribute *attr,
 #ifdef SCRIPTLESS_DEBUG
 	printk("%s:DATA READ\n{", __func__);
 	for (i = 0; i < (2+byte_count_read); i++) {
-		if (!i) {
-			char temp_byte_count_read = (byte_count_read >> 8) & 0xFF;
-			printk("%02X", (unsigned int)temp_byte_count_read);
-		} else if (i == 1) {
-			char temp_byte_count_read = (byte_count_read) & 0xFF;
-			printk("%02X", (unsigned int)temp_byte_count_read);
+	    if (i == 0) {
+		char temp_byte_count_read = (byte_count_read >> 8) & 0xFF;
+		printk("%02X", (unsigned int)temp_byte_count_read);
+	    } else if (i == 1) {
+		char temp_byte_count_read = (byte_count_read) & 0xFF;
+		printk("%02X", (unsigned int)temp_byte_count_read);
 
-		} else {
-			printk("%02X", (unsigned int)info->cmd_read_result[i-2]);
-		}
-		if (i < (byte_count_read+1)) {
-			printk(" ");
-		}
+	    } else {
+		printk("%02X", (unsigned int)info->cmd_read_result[i-2]);
+	    }
+	    if (i < (byte_count_read+1)) {
+		printk(" ");
+	    }
 
 	}
 	printk("}\n");
 #endif
 	if (ret)
-		dev_err(dev, "Unable to read register\n");
+	    dev_err(dev, "Unable to read register\n");
 	return count;
 }
 
 ssize_t fts_i2c_read_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
+	char *buf)
 {
-	struct i2c_client *client = to_i2c_client(dev);
-	struct fts_ts_info *info = i2c_get_clientdata(client);
-	int i ;
-	char buff[16];
+    struct i2c_client *client = to_i2c_client(dev);
+    struct fts_ts_info *info = i2c_get_clientdata(client);
+    int i ;
+    char buff[16];
 
-	memset(Out_buff, 0x00, ARRAY_SIZE(Out_buff));
-	if (byte_count_read == 0) {
-		snprintf(Out_buff, sizeof(Out_buff), "{FAILED}");
-		return snprintf(buf, TSP_BUF_SIZE, "{%s}\n", Out_buff);
-	}
+    memset(Out_buff, 0x00, ARRAY_SIZE(Out_buff));
+    if (byte_count_read == 0) {
+	snprintf(Out_buff, sizeof(Out_buff), "{FAILED}");
+	return snprintf(buf, TSP_BUF_SIZE, "{%s}\n", Out_buff);
+    }
 #ifdef SCRIPTLESS_DEBUG
-	printk("%s:DATA READ {", __func__);
-	for (i = 0; i < byte_count_read; i++) {
-		printk("%02X", (unsigned int)info->cmd_read_result[i]);
-		if (i < (byte_count_read-1)) {
-			printk(" ");
-		}
+    printk("%s:DATA READ {", __func__);
+    for (i = 0; i < byte_count_read; i++) {
+	printk("%02X", (unsigned int)info->cmd_read_result[i]);
+	if (i < (byte_count_read-1)) {
+	    printk(" ");
 	}
-	printk("}\n");
+    }
+    printk("}\n");
 #endif
-	snprintf(buff, sizeof(buff), "{");
-	strlcat(Out_buff, buff,  ARRAY_SIZE(Out_buff));
-	for (i = 0; i < (byte_count_read+2); i++) {
-		if (!i) {
+    snprintf(buff, sizeof(buff), "{");
+    strlcat(Out_buff, buff,  ARRAY_SIZE(Out_buff));
+    for (i = 0; i < (byte_count_read+2); i++) {
+		if (i == 0) {
 			char temp_byte_count_read = (byte_count_read >> 8) & 0xFF;
 			snprintf(buff, sizeof(buff), "%02X", temp_byte_count_read);
 		} else if (i == 1) {
@@ -241,7 +241,7 @@ ssize_t fts_i2c_read_store(struct device *dev, struct device_attribute *attr,
 #ifdef SCRIPTLESS_DEBUG
 	printk("%s:DATA READ\n{", __func__);
 	for (i = 0; i < (byte_count_read+2); i++) {
-		if (!i) {
+		if (i == 0) {
 			char temp_byte_count_read = (byte_count_read >> 8) & 0xFF;
 			printk("%02X", (unsigned int)temp_byte_count_read);
 		} else if (i == 1) {
