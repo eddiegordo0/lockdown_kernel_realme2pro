@@ -396,10 +396,6 @@ enum oppo_battery_type {
 	OPPO_SDI_BATT,
 };
 #endif
-struct fg_saved_data {
-	union power_supply_propval val;
-	unsigned long last_req_expires;
-};
 
 struct fg_chip {
 	struct device		*dev;
@@ -485,7 +481,6 @@ struct fg_chip {
 	struct work_struct	esr_filter_work;
 	struct alarm		esr_filter_alarm;
 	ktime_t			last_delta_temp_time;
-<<<<<<< HEAD
 #ifdef CONFIG_PRODUCT_REALME_RMX1801
 /* Ji.Xu PSW.BSP.CHG  2018-07-23  Save battery capacity to persist partition */
     int				batt_info[6];
@@ -493,7 +488,6 @@ struct fg_chip {
     bool			*batt_range_ocv;
     int				*batt_range_pct;
 #endif
-	struct fg_saved_data	saved_data[POWER_SUPPLY_PROP_MAX];
 };
 
 /* Debugfs data structures are below */
