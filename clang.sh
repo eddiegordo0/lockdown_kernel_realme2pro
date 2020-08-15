@@ -35,10 +35,9 @@ while true; do
 	read choice
 
 	if [ "$choice" == "1" ]; then
-echo "Clean Build Directory"
-echo 
-
-make clean && make mrproper
+	    echo -e "\n(i) Cloning toolcahins if folder not exist..."
+	    git clone https://github.com/kdrag0n/proton-clang --depth=1
+	    echo -e ""start kernel building"" 
 
 echo
 echo "Issue Build Commands"
