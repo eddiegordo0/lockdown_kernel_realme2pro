@@ -356,6 +356,21 @@ config SECCOMP_FILTER
 
 	  See Documentation/prctl/seccomp_filter.txt for details.
 
+config HAVE_GCC_PLUGINS
+	bool
+	help
+	  An arch should select this symbol if it supports building with
+	  GCC plugins.
+
+menuconfig GCC_PLUGINS
+	bool "GCC plugins"
+	depends on HAVE_GCC_PLUGINS
+	help
+	  GCC plugins are loadable modules that provide extra features to the
+	  compiler. They are useful for runtime instrumentation and static analysis.
+
+	  See Documentation/gcc-plugins.txt for details.
+
 config HAVE_CC_STACKPROTECTOR
 	bool
 	help
@@ -422,6 +437,14 @@ config CC_STACKPROTECTOR_STRONG
 	  size by about 2%.
 
 endchoice
+
+config LLVM_POLLY
+	bool "Enable LLVM's polyhedral loop optimizer (Polly)"
+	help
+	  This option enables LLVM's polyhedral loop optimizer known as Polly.
+	  Polly is able to optimize various loops throughout the kernel for
+	  maximum cache locality. This requires an LLVM toolchain explicitly
+	  compiled with Polly support.
 
 config HAVE_ARCH_WITHIN_STACK_FRAMES
 	bool
