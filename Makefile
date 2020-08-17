@@ -660,7 +660,7 @@ else
 ifdef CONFIG_PROFILE_ALL_BRANCHES
 KBUILD_CFLAGS	+= -O2
 else
-<KBUILD_CFLAGS   += -O2
+KBUILD_CFLAGS   += -O2
 endif
 endif
 ifeq ($(cc-name),clang)
