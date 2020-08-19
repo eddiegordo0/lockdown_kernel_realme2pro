@@ -11,6 +11,7 @@ echo -e "$green"
 KERNEL_DIR=$PWD
 KERN_IMG=$KERNEL_DIR/out/arch/arm64/boot/Image.gz-dtb
 ZIP_DIR=$KERNEL_DIR/AnyKernel3
+CROSS_COMPILE+="ccache "
 
 
 # Modules environtment
