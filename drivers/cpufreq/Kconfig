@@ -285,12 +285,6 @@ config ALUCARD_HOTPLUG
 	help
 	  Generic Alucard-hotplug cpu hotplug driver for ARM SOCs.
 
-config CPU_INPUT_BOOST
-	bool "CPU Input Boost"
-	help
-	  Boosts the CPU on touchscreen and touchpad input. Boost frequencies and
-	  duration are configured via sysfs (/sys/kernel/cpu_input_boost/*).
-
 if X86
 source "drivers/cpufreq/Kconfig.x86"
 endif
