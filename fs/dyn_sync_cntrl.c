@@ -219,6 +219,7 @@ static int dyn_fsync_init(void)
 	}
 
 	lcd_notif.notifier_call = lcd_notifier_callback;
+	if (lcd_register_client(&lcd_notif) != 0) 
 	{
 		pr_err("%s: Failed to register lcd callback\n", __func__);
 
@@ -249,6 +250,7 @@ static void dyn_fsync_exit(void)
 	if (dyn_fsync_kobj != NULL)
 		kobject_put(dyn_fsync_kobj);
 	
+	lcd_unregister_client(&lcd_notif);
 		
 	pr_info("%s dynamic fsync unregistration complete\n", __FUNCTION__);
 }
