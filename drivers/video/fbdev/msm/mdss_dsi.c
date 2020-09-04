@@ -35,10 +35,6 @@
 #include "mdss_dsi_phy.h"
 #include "mdss_dba_utils.h"
 
-#ifdef CONFIG_STATE_NOTIFIER
-#include <linux/state_notifier.h>
-#endif
-
 #define CMDLINE_DSI_CTL_NUM_STRING_LEN 2
 
 /* Master structure to hold all the information about the DSI/panel */
@@ -3111,10 +3107,6 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 	case MDSS_EVENT_POST_PANEL_ON:
 		rc = mdss_dsi_post_panel_on(pdata);
 		break;
-		#ifdef CONFIG_STATE_NOTIFIER
-		state_resume();
-		#endif
-		break;
 	case MDSS_EVENT_BLANK:
 		power_state = (int) (unsigned long) arg;
 		if (ctrl_pdata->off_cmds.link_state == DSI_HS_MODE)
@@ -3141,9 +3133,6 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 		/* disable panel power */
 		ret = mdss_dsi_panel_power_ctrl(pdata,
 			MDSS_PANEL_POWER_LCD_DISABLED);
-		#ifdef CONFIG_STATE_NOTIFIER
-		state_suspend();
-		#endif
 		break;
 	case MDSS_EVENT_CONT_SPLASH_FINISH:
 		if (ctrl_pdata->off_cmds.link_state == DSI_LP_MODE)
