@@ -15,8 +15,8 @@ CONFIG=RMX1801_defconfig
 CORES=$(grep -c ^processor /proc/cpuinfo)
 THREAD="-j$CORES"
 CROSS_COMPILE+="ccache "
-CROSS_COMPILE+="$PWD/aarch64-linux-android-4.9/bin/aarch64-linux-android-"
-CROSS_COMPILE_ARM32+="$PWD/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-"
+CROSS_COMPILE+="$PWD/arm64-gcc/bin/aarch64-elf-"
+CROSS_COMPILE_ARM32+="$PWD/arm32-gcc/bin/arm-eabi-"
 
 # Modules environtment
 OUTDIR="$PWD/out/"
@@ -24,7 +24,7 @@ SRCDIR="$PWD/"
 MODULEDIR="$PWD/AnyKernel3/modules/system/lib/modules/"
 PRIMA="$PWD/AnyKernel3/modules/vendor/lib/modules/wlan.ko"
 PRONTO="$PWD/AnyKernel3/modules/vendor/lib/modules/pronto/pronto_wlan.ko"
-STRIP="$PWD/aarch64-linux-android-4.9/bin/$(echo "$(find "$PWD/aarch64-linux-android-4.9/bin" -type f -name "aarch64-*-gcc")" | awk -F '/' '{print $NF}' |\
+STRIP="$PWD/arm64-gcc/bin/$(echo "$(find "$PWD/arm64-gcc/bin" -type f -name "aarch64-*-gcc")" | awk -F '/' '{print $NF}' |\
 			sed -e 's/gcc/strip/')"
 
 # Export
@@ -49,8 +49,8 @@ while true; do
 
 	if [ "$choice" == "1" ]; then
 		echo -e "\n(i) Cloning toolcahins if folder not exist..."
-		git clone https://gitlab.com/Vijaymalav564/aarch64-linux-android-4.9.git --depth 69
-                git clone https://gitlab.com/Vijaymalav564/arm-linux-androideabi-4.9.git --depth 69
+		git clone https://github.com/arter97/arm64-gcc
+                git clone https://github.com/arter97/arm32-gcc
 		echo -e ""
 		make  O=out $CONFIG $THREAD &>/dev/null
 		make  O=out $THREAD & pid=$!
