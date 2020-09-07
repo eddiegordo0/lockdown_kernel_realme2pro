@@ -3159,6 +3159,37 @@ extern bool current_is_single_threaded(void);
 #define for_each_process_thread(p, t)	\
 	for_each_process(p) for_each_thread(p, t)
 
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+/* Huacai.Zhou@PSW.BSP.Kernel.Performance, 2018-04-26, add smart alloc support,front process first*/
+#ifdef CONFIG_OPPO_FG_OPT
+extern bool is_fg(int uid);
+static inline int current_is_fg(void)
+{
+	int cur_uid;
+	cur_uid = current_uid().val;
+	if (is_fg(cur_uid))
+	        return 1;
+	return 0;
+}
+
+/* Kui.Zhang@PSW.BSP.Kernel.MM, 2018-12-25, check whether task is fg*/
+static inline int task_is_fg(struct task_struct* task)
+{
+	int task_uid;
+	task_uid = task_uid(task).val;
+	if (is_fg(task_uid))
+		return 1;
+	return 0;
+}
+#else
+static inline int current_is_fg(void)
+{
+	return 0;
+}
+#endif /*CONFIG_OPPO_FG_OPT*/
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
+
+
 static inline int get_nr_threads(struct task_struct *tsk)
 {
 	return tsk->signal->nr_threads;

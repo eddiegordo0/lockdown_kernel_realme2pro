@@ -1693,6 +1693,28 @@ static int current_may_throttle(void)
 		bdi_write_congested(current->backing_dev_info);
 }
 
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+/*Huacai.Zhou@PSW.BSP.Kernel.MM, 2018-04-28, fix direct reclaim slow issue*/
+#ifdef CONFIG_OPPO_FG_OPT
+extern bool is_fg(int uid);
+#endif
+static inline int get_current_adj(void)
+{
+#ifdef CONFIG_OPPO_FG_OPT
+	int cur_uid;
+#endif
+	if (current->signal->oom_score_adj < 0)
+		return 0;
+#ifdef CONFIG_OPPO_FG_OPT
+	cur_uid = current_uid().val;
+	if (is_fg(cur_uid))
+		return 0;
+#endif
+	return current->signal->oom_score_adj;
+}
+#endif /*CONFIG_PRODUCT/REALME_RMX1801*/
+
+
 /*
  * shrink_inactive_list() is a helper for shrink_zone().  It returns the number
  * of reclaimed pages

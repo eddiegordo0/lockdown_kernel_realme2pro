@@ -135,6 +135,10 @@ static unsigned long zero_ul;
 static unsigned long one_ul = 1;
 static unsigned long long_max = LONG_MAX;
 static int one_hundred = 100;
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+/*Huacai.Zhou@PSW.BSP.Kernel.Performance, 2018-04-28, add foreground task io opt*/
+unsigned int sysctl_fg_io_opt = 1;
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
 #ifdef CONFIG_PRINTK
 static int ten_thousand = 10000;
 #endif
@@ -524,6 +528,17 @@ static struct ctl_table kern_table[] = {
 		.proc_handler   = proc_dointvec,
 	},
 #endif	/* CONFIG_SCHED_HMP */
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+	/*Huacai.Zhou@PSW.BSP.Kernel.Performance, 2018-04-28, add foreground task io opt*/
+	{
+		.procname	= "fg_io_opt",
+		.data	= &sysctl_fg_io_opt,
+		.maxlen	= sizeof(int),
+		.mode	= 0644,
+		.proc_handler   = proc_dointvec,
+	},
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
+
 #ifdef CONFIG_SCHED_DEBUG
 	{
 		.procname	= "sched_min_granularity_ns",
