@@ -22,3 +22,8 @@ config OPPO_DEVICE_IFNO
 source "drivers/soc/oppo/oppo_project/Kconfig"
 
 source "drivers/soc/oppo/oppo_devinfo/Kconfig"
+
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+#//jie.cheng@swdp.sh, 2016/04/15, Add hypnus helper
+source "drivers/soc/oppo/oppo_hypnus/Kconfig"
+#endif /* CONFIG_PRODUCT_REALME_RMX1801 */
