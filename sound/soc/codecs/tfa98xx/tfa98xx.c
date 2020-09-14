@@ -30,9 +30,10 @@
 #include <linux/regulator/consumer.h>
 
 #ifdef CONFIG_PRODUCT_REALME_RMX1801
-/*Ming.Liu@PSW.MM.AudioDriver.SmartPA, 2016/10/17,
-  Add for sharing software image*/
-//#include <soc/oppo/oppo_project.h>
+/*Jianfeng.Qiu@PSW.MM.AudioDriver.SmartPA, 2018/05/24,
+ *Add for sharing software image
+ */
+#include <soc/oppo/oppo_project.h>
 #endif /* CONFIG_PRODUCT_REALME_RMX1801 */
 
 #include "config.h"

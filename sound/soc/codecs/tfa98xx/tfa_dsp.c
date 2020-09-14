@@ -3134,7 +3134,7 @@ enum tfa_error tfa_start(int next_profile, int *vstep)
         /*xiang.fei@PSW.MM.AudioDriver.SmartPA, 2017/09/08,Modify for code error*/
         return tfa_error_bad_param;
         #else /* CONFIG_PRODUCT_REALME_RMX1801 */
-        return tfa98xxTotfa(err);
+        return Tfa98xx_Error_Bad_Parameter;
         #endif /* CONFIG_PRODUCT_REALME_RMX1801 */
     }
 
@@ -3289,7 +3289,7 @@ enum tfa_error tfa_stop(void)
         /*xiang.fei@PSW.MM.AudioDriver.SmartPA, 2017/09/08,Modify for code error*/
         return tfa_error_bad_param;
         #else /* CONFIG_PRODUCT_REALME_RMX1801 */
-        return tfa98xxTotfa(err);
+        return Tfa98xx_Error_Bad_Parameter;
         #endif /* CONFIG_PRODUCT_REALME_RMX1801 */
     }
 
