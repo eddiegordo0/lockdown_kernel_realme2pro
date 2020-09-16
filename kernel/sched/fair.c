@@ -36,7 +36,11 @@
 #include <trace/events/sched.h>
 #include "tune.h"
 #include "walt.h"
-
+#if defined(CONFIG_PRODUCT_REALME_RMX1801) && defined(CONFIG_OPPO_HEALTHINFO)
+// wenbin.liu@PSW.BSP.MM, 2018/05/02
+// Add for get cpu load
+#include <soc/oppo/oppo_healthinfo.h>
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
 /*
  * Targeted preemption latency for CPU-bound tasks:
  * (default: 6ms * (1 + ilog(ncpus)), units: nanoseconds)
@@ -54,7 +58,11 @@ unsigned int normalized_sysctl_sched_latency		= 10000000ULL;
 
 unsigned int sysctl_sched_sync_hint_enable = 1;
 unsigned int sysctl_sched_cstate_aware = 1;
-
+#if defined(CONFIG_PRODUCT_REALME_RMX1801) && defined(CONFIG_OPPO_HEALTHINFO)
+// wenbin.liu@PSW.BSP.MM, 2018/05/26
+// Add for get sched latency stat
+extern void ohm_schedstats_record(int sched_type, int fg, u64 delta);
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
 /*
  * The initial- and re-scaling of tunables is configurable
  * (default SCHED_TUNABLESCALING_LOG = *(1+ilog(ncpus))
@@ -916,6 +924,11 @@ update_stats_wait_end(struct cfs_rq *cfs_rq, struct sched_entity *se)
 			se->statistics.wait_start = delta;
 			return;
 		}
+#if defined(CONFIG_PRODUCT_REALME_RMX1801) && defined(CONFIG_OPPO_HEALTHINFO)
+// wenbin.liu@PSW.TECH.KERNEL, 2018/05/26
+// Add for get sched latency stat
+                ohm_schedstats_record(OHM_SCHED_SCHEDLATENCY, current_is_fg(), (delta >> 20));
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
 		trace_sched_stat_wait(p, delta);
 	}
 
@@ -4558,6 +4571,11 @@ static void enqueue_sleeper(struct cfs_rq *cfs_rq, struct sched_entity *se)
 			if (tsk->in_iowait) {
 				se->statistics.iowait_sum += delta;
 				se->statistics.iowait_count++;
+#if defined(CONFIG_PRODUCT_REALME_RMX1801) && defined(CONFIG_OPPO_HEALTHINFO)
+// wenbin.liu@PSW.BSP.MM, 2018/05/26
+// Add for get sched latency stat
+		                ohm_schedstats_record(OHM_SCHED_IOWAIT, current_is_fg(), (delta >> 20));
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
 				trace_sched_stat_iowait(tsk, delta);
 			}
 

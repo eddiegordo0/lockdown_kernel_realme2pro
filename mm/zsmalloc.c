@@ -65,7 +65,12 @@
  * A single 'zspage' is composed of up to 2^N discontiguous 0-order (single)
  * pages. ZS_MAX_ZSPAGE_ORDER defines upper limit on N.
  */
+#ifndef CONFIG_PRODUCT_REALME_RMX1801 //YiXue.Ge@PSW.kernel.drv 20170703 modify ZS_MAX_ZSPAGE_ORDER as 3
 #define ZS_MAX_ZSPAGE_ORDER 2
+#else
+#define ZS_MAX_ZSPAGE_ORDER 3
+#endif
+
 #define ZS_MAX_PAGES_PER_ZSPAGE (_AC(1, UL) << ZS_MAX_ZSPAGE_ORDER)
 
 #define ZS_HANDLE_SIZE (sizeof(unsigned long))
@@ -275,7 +280,11 @@ struct zs_pool {
  */
 #define FULLNESS_BITS	2
 #define CLASS_BITS	8
+#ifdef CONFIG_PRODUCT_REALME_RMX1801 //YiXue.Ge@PSW.kernel.drv 20170703 modify ZS_MAX_ZSPAGE_ORDER as 3
+#define ISOLATED_BITS	(ZS_MAX_ZSPAGE_ORDER+1)
+#else
 #define ISOLATED_BITS	3
+#endif
 #define MAGIC_VAL_BITS	8
 
 struct zspage {
@@ -479,7 +488,7 @@ static bool is_zspage_isolated(struct zspage *zspage)
 	return zspage->isolated;
 }
 
-static __maybe_unused int is_first_page(struct page *page)
+static int is_first_page(struct page *page)
 {
 	return PagePrivate(page);
 }
@@ -564,23 +573,20 @@ static int get_size_class_index(int size)
 	return min(zs_size_classes - 1, idx);
 }
 
-/* type can be of enum type zs_stat_type or fullness_group */
 static inline void zs_stat_inc(struct size_class *class,
-				int type, unsigned long cnt)
+				enum zs_stat_type type, unsigned long cnt)
 {
 	class->stats.objs[type] += cnt;
 }
 
-/* type can be of enum type zs_stat_type or fullness_group */
 static inline void zs_stat_dec(struct size_class *class,
-				int type, unsigned long cnt)
+				enum zs_stat_type type, unsigned long cnt)
 {
 	class->stats.objs[type] -= cnt;
 }
 
-/* type can be of enum type zs_stat_type or fullness_group */
 static inline unsigned long zs_stat_get(struct size_class *class,
-				int type)
+				enum zs_stat_type type)
 {
 	return class->stats.objs[type];
 }

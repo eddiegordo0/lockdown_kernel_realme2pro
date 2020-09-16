@@ -1641,6 +1641,16 @@ struct tlbflush_unmap_batch {
 	bool writable;
 };
 
+#if defined(CONFIG_PRODUCT_REALME_RMX1801) && defined(CONFIG_PROCESS_RECLAIM)
+/* Kui.Zhang@TEC.Kernel.Performance, 2019/03/04
+ * Record process reclaim infor
+ */
+union reclaim_limit {
+	unsigned long stop_jiffies;
+	unsigned long stop_scan_addr;
+};
+#endif
+
 struct task_struct {
 #ifdef CONFIG_THREAD_INFO_IN_TASK
 	/*
@@ -1763,6 +1773,16 @@ struct task_struct {
 	/* unserialized, strictly 'current' */
 	unsigned in_execve:1; /* bit to tell LSMs we're in execve */
 	unsigned in_iowait:1;
+
+#if defined(CONFIG_PRODUCT_REALME_RMX1801) && defined(CONFIG_OPPO_HEALTHINFO)
+// jiheng.xie@PSW.TECH.KERNEL, 2018/12/14
+// Add for get sched latency stat
+	unsigned in_downread:1;
+	unsigned in_mmap_downread:1;
+	unsigned in_downwrite:1;
+        unsigned in_mmap_downwrite:1;
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
+
 #ifdef CONFIG_MEMCG
 	unsigned memcg_may_oom:1;
 #endif
@@ -2130,6 +2150,14 @@ struct task_struct {
 	unsigned long	task_state_change;
 #endif
 	int pagefault_disabled;
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+	    int static_ux;
+#endif /* CONFIG_PRODUCT_REALME_RMX1801 */
+#if defined(CONFIG_PRODUCT_REALME_RMX1801) && defined(CONFIG_PROCESS_RECLAIM)/* Kui.Zhang@TEC.Kernel.Performance, 2019/03/04
+* Record process reclaim infor
+*/
+	union reclaim_limit reclaim;
+#endif
 /* CPU-specific state of this task */
 	struct thread_struct thread;
 /*
@@ -2416,7 +2444,12 @@ extern void thread_group_cputime_adjusted(struct task_struct *p, cputime_t *ut, 
 #define PF_MUTEX_TESTER	0x20000000	/* Thread belongs to the rt mutex tester */
 #define PF_FREEZER_SKIP	0x40000000	/* Freezer should not count it as freezable */
 #define PF_SUSPEND_TASK 0x80000000      /* this thread called freeze_processes and should not be frozen */
+#if defined(CONFIG_PRODUCT_REALME_RMX1801) && defined(CONFIG_PROCESS_RECLAIM)
+/* Kui.Zhang@PSW.BSP.Kernel.Performance, 2018-12-25, flag that current task is process reclaimer */
+#define PF_RECLAIM_SHRINK	0x10000000
 
+#define current_is_reclaimer() (current->flags & PF_RECLAIM_SHRINK)
+#endif
 #define PF_SU		0x10000000      /* task is su */
 
 /*

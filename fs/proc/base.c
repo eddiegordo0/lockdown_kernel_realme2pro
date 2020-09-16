@@ -87,6 +87,7 @@
 #include <linux/slab.h>
 #include <linux/flex_array.h>
 #include <linux/posix-timers.h>
+//#include <linux/cpufreq_times.h>
 #ifdef CONFIG_HARDWALL
 #include <asm/hardwall.h>
 #endif
@@ -95,6 +96,7 @@
 #include "fd.h"
 
 #include "../../lib/kstrtox.h"
+
 
 /* NOTE:
  *	Implementing inode permission operations in /proc is almost
@@ -962,6 +964,7 @@ static const struct file_operations proc_mem_operations = {
 	.open		= mem_open,
 	.release	= mem_release,
 };
+
 
 static int environ_open(struct inode *inode, struct file *file)
 {
@@ -1939,6 +1942,7 @@ int pid_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
 	rcu_read_unlock();
 	return 0;
 }
+
 
 /* dentry stuff */
 

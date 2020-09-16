@@ -2,6 +2,7 @@
  * /proc/uid support
  */
 
+//#include <linux/cpufreq_times.h>
 #include <linux/fs.h>
 #include <linux/hashtable.h>
 #include <linux/init.h>

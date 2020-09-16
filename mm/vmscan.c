@@ -111,6 +111,13 @@ struct scan_control {
 	 * on memory until last task zap it.
 	 */
 	struct vm_area_struct *target_vma;
+
+#if defined(CONFIG_PRODUCT_REALME_RMX1801) && defined(CONFIG_PROCESS_RECLAIM)
+	/* robin.ren@PSW.BSP.Kernel.Performance, 2019-03-13,
+	 * use mm_walk to regonize the behaviour of process reclaim.
+	 */
+	struct mm_walk *walk;
+#endif
 };
 
 #define lru_to_page(_head) (list_entry((_head)->prev, struct page, lru))
@@ -146,12 +153,26 @@ struct scan_control {
 /*
  * From 0 .. 100.  Higher means more swappy.
  */
-int vm_swappiness = 80;
+int vm_swappiness = 60;
+
+#ifdef CONFIG_PRODUCT_REALME_RMX1801 //yixue.ge@psw.bsp.kernel 20170720 add for add direct_vm_swappiness
+/*
+ * Direct reclaim swappiness, exptct 0 - 60. Higher means more swappy and slower.
+ */
+int direct_vm_swappiness = 60;
+#endif
+
 /*
  * The total number of pages which are beyond the high watermark within all
  * zones.
  */
 unsigned long vm_total_pages;
+
+#ifdef CONFIG_KSWAPD_CPU_AFFINITY_MASK
+char *kswapd_cpu_mask = CONFIG_KSWAPD_CPU_AFFINITY_MASK;
+#else
+char *kswapd_cpu_mask = NULL;
+#endif
 
 static LIST_HEAD(shrinker_list);
 static DECLARE_RWSEM(shrinker_rwsem);
@@ -961,6 +982,13 @@ static unsigned long shrink_page_list(struct list_head *page_list,
 		enum page_references references = PAGEREF_RECLAIM;
 		bool dirty, writeback;
 
+#if defined(CONFIG_PRODUCT_REALME_RMX1801) && defined(CONFIG_PROCESS_RECLAIM)
+		/* Kui.Zhang@PSW.BSP.Kernel.Performance, 2018-12-25, check whether the
+		 * reclaim process should cancel*/
+		if (sc->walk && is_reclaim_should_cancel(sc->walk))
+			break;
+#endif
+
 		cond_resched();
 
 		page = lru_to_page(page_list);
@@ -1326,8 +1354,14 @@ unsigned long reclaim_clean_pages_from_list(struct zone *zone,
 }
 
 #ifdef CONFIG_PROCESS_RECLAIM
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+/* Kui.Zhang@PSW.BSP.Kernel.Performance, 2018-12-25, record the scaned task*/
+unsigned long reclaim_pages_from_list(struct list_head *page_list,
+			struct vm_area_struct *vma, struct mm_walk *walk)
+#else
 unsigned long reclaim_pages_from_list(struct list_head *page_list,
 					struct vm_area_struct *vma)
+#endif
 {
 	struct scan_control sc = {
 		.gfp_mask = GFP_KERNEL,
@@ -1336,6 +1370,10 @@ unsigned long reclaim_pages_from_list(struct list_head *page_list,
 		.may_unmap = 1,
 		.may_swap = 1,
 		.target_vma = vma,
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+		/* Kui.Zhang@PSW.BSP.Kernel.Performance, 2018-12-25, record the scaned task*/
+		.walk = walk,
+#endif
 	};
 
 	unsigned long nr_reclaimed;
@@ -1538,6 +1576,13 @@ int isolate_lru_page(struct page *page)
 	int ret = -EBUSY;
 
 	VM_BUG_ON_PAGE(!page_count(page), page);
+#if defined(CONFIG_PRODUCT_REALME_RMX1801) && defined(CONFIG_PROCESS_RECLAIM)
+	/* Kui.Zhang@PSW.TEC.Kernel.Performance, 2019-01-08, Because process reclaim is doing page by
+	 * page, so there many compound pages are relcaimed, so too many warning msg on this case. */
+	WARN_RATELIMIT((!current_is_reclaimer() && PageTail(page)), "trying to isolate tail page");
+#else
+	WARN_RATELIMIT(PageTail(page), "trying to isolate tail page");
+#endif
 
 	if (PageLRU(page)) {
 		struct zone *zone = page_zone(page);
@@ -1712,8 +1757,7 @@ static inline int get_current_adj(void)
 #endif
 	return current->signal->oom_score_adj;
 }
-#endif /*CONFIG_PRODUCT/REALME_RMX1801*/
-
+#endif /*VENDOR*/
 
 /*
  * shrink_inactive_list() is a helper for shrink_zone().  It returns the number
@@ -1855,15 +1899,22 @@ shrink_inactive_list(unsigned long nr_to_scan, struct lruvec *lruvec,
 	 * is congested. Allow kswapd to continue until it starts encountering
 	 * unqueued dirty pages or cycling through the LRU too quickly.
 	 */
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+/*Huacai.Zhou@PSW.BSP.Kernel.MM, 2018-04-28, fix direct reclaim slow issue*/
+	if (!sc->hibernation_mode && !current_is_kswapd() &&
+	    current_may_throttle() && get_current_adj())
+#else
 	if (!sc->hibernation_mode && !current_is_kswapd() &&
 	    current_may_throttle())
-		wait_iff_congested(zone, BLK_RW_ASYNC, HZ/10);
+#endif
+               wait_iff_congested(zone, BLK_RW_ASYNC, HZ/10);
 
-	trace_mm_vmscan_lru_shrink_inactive(zone->zone_pgdat->node_id,
-		zone_idx(zone),
-		nr_scanned, nr_reclaimed,
-		sc->priority,
-		trace_shrink_flags(file));
+       trace_mm_vmscan_lru_shrink_inactive(zone->zone_pgdat->node_id,
+               zone_idx(zone),
+               nr_scanned, nr_reclaimed,
+               sc->priority,
+               trace_shrink_flags(file));
+
 	return nr_reclaimed;
 }
 
@@ -2039,8 +2090,12 @@ static bool inactive_anon_is_low_global(struct zone *zone)
 
 	active = zone_page_state(zone, NR_ACTIVE_ANON);
 	inactive = zone_page_state(zone, NR_INACTIVE_ANON);
-
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+/*Huacai.Zhou@PSW.BSP.Kernel.MM, 2018-07-21, try to shrink more anon pages*/
+	return inactive < active;
+#else
 	return inactive * zone->inactive_ratio < active;
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
 }
 
 /**
@@ -2087,6 +2142,25 @@ static inline bool inactive_anon_is_low(struct lruvec *lruvec)
  */
 static bool inactive_file_is_low(struct lruvec *lruvec)
 {
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+/*Huacai.Zhou@PSW.BSP.Tech.Performance, 2018-07-30, keep more file pages*/
+	unsigned long gb;
+	unsigned long inactive;
+	unsigned long active;
+	unsigned long inactive_ratio;
+
+	inactive = get_lru_size(lruvec, LRU_INACTIVE_FILE);
+	active = get_lru_size(lruvec, LRU_ACTIVE_FILE);
+
+	gb = (inactive + active) >> (30 - PAGE_SHIFT);
+
+	if (gb)
+		inactive_ratio = min(2UL, int_sqrt(10 * gb));
+	else
+		inactive_ratio = 1;
+
+	return inactive * inactive_ratio < active;
+#else
 	unsigned long inactive;
 	unsigned long active;
 
@@ -2094,6 +2168,7 @@ static bool inactive_file_is_low(struct lruvec *lruvec)
 	active = get_lru_size(lruvec, LRU_ACTIVE_FILE);
 
 	return active > inactive;
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
 }
 
 static bool inactive_list_is_low(struct lruvec *lruvec, enum lru_list lru)
@@ -2165,11 +2240,20 @@ static void get_scan_count(struct lruvec *lruvec, int swappiness,
 		if (!mem_cgroup_lruvec_online(lruvec))
 			force_scan = true;
 	}
+#ifdef CONFIG_PRODUCT_REALME_RMX1801 //yixue.ge@psw.bsp.kernel 20170720 add for add direct_vm_swappiness
+	else {
+		swappiness = direct_vm_swappiness;
+	}
+#endif
 	if (!global_reclaim(sc))
 		force_scan = true;
 
 	/* If we have no swap space, do not bother scanning anon pages. */
+#ifndef CONFIG_PRODUCT_REALME_RMX1801 //yixue.ge@psw.bsp.kernel.driver 20170810 modify for reserver some zram disk size
 	if (!sc->may_swap || (get_nr_swap_pages() <= 0)) {
+#else
+	if (!sc->may_swap || (get_nr_swap_pages() <= total_swap_pages>>6)) {
+#endif
 		scan_balance = SCAN_FILE;
 		goto out;
 	}
@@ -2613,7 +2697,7 @@ static bool shrink_zone(struct zone *zone, struct scan_control *sc,
 		 */
 		vmpressure(sc->gfp_mask, sc->target_mem_cgroup,
 			   sc->nr_scanned - nr_scanned,
-			   sc->nr_reclaimed - nr_reclaimed, sc->order);
+			   sc->nr_reclaimed - nr_reclaimed);
 
 		if (reclaim_state) {
 			sc->nr_reclaimed += reclaim_state->reclaimed_slab;
@@ -3569,7 +3653,7 @@ static int kswapd(void *p)
 
 	lockdep_set_current_reclaim_state(GFP_KERNEL);
 
-	if (!cpumask_empty(cpumask))
+	if (kswapd_cpu_mask == NULL && !cpumask_empty(cpumask))
 		set_cpus_allowed_ptr(tsk, cpumask);
 	current->reclaim_state = &reclaim_state;
 
@@ -3733,6 +3817,22 @@ static int cpu_callback(struct notifier_block *nfb, unsigned long action,
 	return NOTIFY_OK;
 }
 
+static int set_kswapd_cpu_mask(pg_data_t *pgdat)
+{
+	int ret = 0;
+	cpumask_t tmask;
+
+	if (!kswapd_cpu_mask)
+		return 0;
+
+	cpumask_clear(&tmask);
+	ret = cpumask_parse(kswapd_cpu_mask, &tmask);
+	if (ret)
+		return ret;
+
+	return set_cpus_allowed_ptr(pgdat->kswapd, &tmask);
+}
+
 /*
  * This kswapd start function will be called by init and node-hot-add.
  * On node-hot-add, kswapd will moved to proper cpus if cpus are hot-added.
@@ -3752,6 +3852,9 @@ int kswapd_run(int nid)
 		pr_err("Failed to start kswapd on node %d\n", nid);
 		ret = PTR_ERR(pgdat->kswapd);
 		pgdat->kswapd = NULL;
+	} else if (kswapd_cpu_mask) {
+		if (set_kswapd_cpu_mask(pgdat))
+			pr_warn("error setting kswapd cpu affinity mask\n");
 	}
 	return ret;
 }
@@ -3777,7 +3880,8 @@ static int __init kswapd_init(void)
 	swap_setup();
 	for_each_node_state(nid, N_MEMORY)
  		kswapd_run(nid);
-	hotcpu_notifier(cpu_callback, 0);
+	if (kswapd_cpu_mask == NULL)
+		hotcpu_notifier(cpu_callback, 0);
 	return 0;
 }
 

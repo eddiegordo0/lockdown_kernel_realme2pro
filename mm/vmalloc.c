@@ -1540,7 +1540,7 @@ static void __vunmap(const void *addr, int deallocate_pages)
 			addr))
 		return;
 
-	area = find_vm_area(addr);
+	area = find_vmap_area((unsigned long)addr)->vm;
 	if (unlikely(!area)) {
 		WARN(1, KERN_ERR "Trying to vfree() nonexistent vm area (%p)\n",
 				addr);
@@ -1787,7 +1787,7 @@ void *__vmalloc_node_range(unsigned long size, unsigned long align,
 	 * First make sure the mappings are removed from all page-tables
 	 * before they are freed.
 	 */
-	vmalloc_sync_unmappings();
+	vmalloc_sync_all();
 
 	/*
 	 * In this function, newly allocated vm_struct has VM_UNINITIALIZED
@@ -2324,19 +2324,16 @@ int remap_vmalloc_range(struct vm_area_struct *vma, void *addr,
 EXPORT_SYMBOL(remap_vmalloc_range);
 
 /*
- * Implement stubs for vmalloc_sync_[un]mappings () if the architecture chose
- * not to have one.
+ * Implement a stub for vmalloc_sync_all() if the architecture chose not to
+ * have one.
  *
  * The purpose of this function is to make sure the vmalloc area
  * mappings are identical in all page-tables in the system.
  */
-void __weak vmalloc_sync_mappings(void)
+void __weak vmalloc_sync_all(void)
 {
 }
 
-void __weak vmalloc_sync_unmappings(void)
-{
-}
 
 static int f(pte_t *pte, pgtable_t table, unsigned long addr, void *data)
 {
@@ -2753,7 +2750,11 @@ static int s_show(struct seq_file *m, void *p)
 	seq_printf(m, "0x%pK-0x%pK %7ld",
 		v->addr, v->addr + v->size, v->size);
 
+	#ifdef CONFIG_PRODUCT_REALME_RMX1801 //wanghao@bsp.drv modify for android.bg get pss too slow
+	if (v->caller && (strcmp(current->comm, "android.bg") != 0))
+	#else
 	if (v->caller)
+	#endif
 		seq_printf(m, " %pS", v->caller);
 
 	if (v->nr_pages)

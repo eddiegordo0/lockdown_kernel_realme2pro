@@ -654,6 +654,19 @@ config BALANCE_ANON_FILE_RECLAIM
 	  Swapping anonymous pages out to memory can be efficient enough to justify
 	  treating anonymous and file backed pages equally.
 
+config KSWAPD_CPU_AFFINITY_MASK
+	string "kswapd cpu affinity mask"
+	depends on SMP
+	help
+	  Set the cpu affinity for the kswapd task.
+	  There can be power benefits on certain targets when limiting kswapd
+	  to run only on certain cores.
+	  The cpu affinity bitmask is represented by a hex string where commas
+	  group hex digits into chunks.  Each chunk defines exactly 32 bits of
+	  the resultant bitmask.
+	  For example to limit kswapd to the first 4 cores use the following:
+	  CONFIG_KSWAPD_CPU_AFFINITY_MASK="f"
+
 # For architectures that support deferred memory initialisation
 config ARCH_SUPPORTS_DEFERRED_STRUCT_PAGE_INIT
 	bool
@@ -731,10 +744,32 @@ config PROCESS_RECLAIM
 
 	 Any other vaule is ignored.
 
-config VM_MAX_READAHEAD
-	int "default max readahead window size"
-	default 128
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+#/* Huacai.Zhou@PSW.BSP.Kernel.MM, 2018-07-07, add alloc wait monitor support*/
+config OPPO_MEM_MONITOR
+	bool "memory monitor "
+	default n
 	help
-	 This sets the VM_MAX_READAHEAD value to allow the readahead window
-	 to grow to a maximum size of configured. This will benefit sequential
-	 read throughput and thus early boot performance.
+	 memory monitor.
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
+
+
+# if defined(CONFIG_PRODUCT_REALME_RMX1801)
+# Kui.Zhang@PSW.BSP.Kernel.Performance, 2018-11-07, Support reclaim process
+# inactive pages only
+config PROCESS_RECLAIM_ENHANCE
+	bool "Enable process reclaim enchance"
+	depends on PROCESS_RECLAIM
+	default y
+	help
+	 It allows to reclaim different type pages of the process by
+	 /proc/pid/reclaim.
+
+	 (echo inactive_file > /proc/PID/reclaim) reclaims inactive file-backed
+		pages only.
+	 (echo inactive_anon > /proc/PID/reclaim) reclaims inactive anonymous
+		pages only.
+	 (echo inactive > /proc/PID/reclaim) reclaims inactive file-backed and
+		anonymous pages only.
+	 Any other vaule, please reference PROCESS_RECLAIM.
+#endif

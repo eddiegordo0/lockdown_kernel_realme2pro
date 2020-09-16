@@ -107,6 +107,11 @@ struct ion_client *ion_client_create(struct ion_device *dev,
 extern long ion_system_heap_cached_memory(struct ion_heap *heap);
 #endif
 
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+/* Huacai.Zhou@PSW.BSP.Kernel.MM, 2018-06-26, add ion total used account*/
+unsigned long ion_total(void);
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
+
 /**
  * ion_client_destroy() -  free's a client and all it's handles
  * @client:	the client

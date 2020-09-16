@@ -18,6 +18,10 @@
 #include <asm/page.h>
 #include <asm/pgtable.h>
 #include "internal.h"
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+/* Huacai.Zhou@PSW.BSP.Kernel.MM, 2018-06-26, add ion total used account*/
+#include <linux/ion.h>
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
 
 void __attribute__((weak)) arch_report_meminfo(struct seq_file *m)
 {
@@ -29,7 +33,10 @@ static int meminfo_proc_show(struct seq_file *m, void *v)
 	unsigned long committed;
 	long cached;
 	long available;
+	unsigned long pagecache;
+	unsigned long wmark_low = 0;
 	unsigned long pages[NR_LRU_LISTS];
+	struct zone *zone;
 	int lru;
 
 /*
@@ -48,7 +55,40 @@ static int meminfo_proc_show(struct seq_file *m, void *v)
 	for (lru = LRU_BASE; lru < NR_LRU_LISTS; lru++)
 		pages[lru] = global_page_state(NR_LRU_BASE + lru);
 
-	available = si_mem_available();
+	for_each_zone(zone)
+		wmark_low += zone->watermark[WMARK_LOW];
+
+	/*
+	 * Estimate the amount of memory available for userspace allocations,
+	 * without causing swapping.
+	 */
+	available = i.freeram - totalreserve_pages;
+
+	/*
+	 * Not all the page cache can be freed, otherwise the system will
+	 * start swapping. Assume at least half of the page cache, or the
+	 * low watermark worth of cache, needs to stay.
+	 */
+	pagecache = pages[LRU_ACTIVE_FILE] + pages[LRU_INACTIVE_FILE];
+	pagecache -= min(pagecache / 2, wmark_low);
+	available += pagecache;
+
+	/*
+	 * Part of the reclaimable slab consists of items that are in use,
+	 * and cannot be freed. Cap this estimate at the low watermark.
+	 */
+	available += global_page_state(NR_SLAB_RECLAIMABLE) -
+		     min(global_page_state(NR_SLAB_RECLAIMABLE) / 2, wmark_low);
+
+	/*
+	 * Part of the kernel memory, which can be released under memory
+	 * pressure.
+	 */
+	available += global_page_state(NR_INDIRECTLY_RECLAIMABLE_BYTES) >>
+		PAGE_SHIFT;
+
+	if (available < 0)
+		available = 0;
 
 	/*
 	 * Tagged format, for easy grepping and expansion.
@@ -110,6 +150,15 @@ static int meminfo_proc_show(struct seq_file *m, void *v)
 		"CmaTotal:       %8lu kB\n"
 		"CmaFree:        %8lu kB\n"
 #endif
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+/* Hui.Fan@PSW.BSP.Kernel.MM, 2017-8-21 */
+		"Oppo2Free:      %8lu kB\n"
+#endif /* CONFIG_PRODUCT_REALME_RMX1801 */
+#if defined(CONFIG_PRODUCT_REALME_RMX1801) && defined(CONFIG_ION)
+/* Huacai.Zhou@PSW.BSP.Kernel.MM, 2018-06-26, add ion total used account*/
+		"IonTotalCache:  %8lu kB\n"
+		"IonTotalUsed:   %8lu kB\n"
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
 		,
 		K(i.totalram),
 		K(i.freeram),
@@ -169,6 +218,15 @@ static int meminfo_proc_show(struct seq_file *m, void *v)
 		, K(totalcma_pages)
 		, K(global_page_state(NR_FREE_CMA_PAGES))
 #endif
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+/* Hui.Fan@PSW.BSP.Kernel.MM, 2017-8-21 */
+		, K(global_page_state(NR_FREE_OPPO2_PAGES))
+#endif /* CONFIG_PRODUCT_REALME_RMX1801 */
+#if defined(CONFIG_PRODUCT_REALME_RMX1801) && defined(CONFIG_ION)
+/* Huacai.Zhou@PSW.BSP.Kernel.MM, 2018-06-26, add ion total used account*/
+		, K(global_page_state(NR_IONCACHE_PAGES))
+		, K(ion_total() >> PAGE_SHIFT)
+#endif /* CONFIG_PRODUCT_REALME_RMX1801 */
 		);
 
 	hugetlb_report_meminfo(m);

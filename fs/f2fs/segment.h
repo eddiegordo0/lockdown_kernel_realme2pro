@@ -226,13 +226,9 @@ struct sit_info {
 	block_t sit_base_addr;		/* start block address of SIT area */
 	block_t sit_blocks;		/* # of blocks used by SIT area */
 	block_t written_valid_blocks;	/* # of valid blocks in main area */
-	char *bitmap;			/* all bitmaps pointer */
 	char *sit_bitmap;		/* SIT bitmap pointer */
 #ifdef CONFIG_F2FS_CHECK_FS
 	char *sit_bitmap_mir;		/* SIT bitmap mirror */
-
-	/* bitmap of segments to be ignored by GC in case of errors */
-	unsigned long *invalid_segmap;
 #endif
 	unsigned int bitmap_size;	/* SIT bitmap size */
 
@@ -313,8 +309,6 @@ struct sit_entry_set {
  */
 static inline struct curseg_info *CURSEG_I(struct f2fs_sb_info *sbi, int type)
 {
-	if (type == CURSEG_COLD_DATA_PINNED)
-		type = CURSEG_COLD_DATA;
 	return (struct curseg_info *)(SM_I(sbi)->curseg_array + type);
 }
 
@@ -588,13 +582,13 @@ static inline bool has_not_enough_free_secs(struct f2fs_sb_info *sbi,
 		reserved_sections(sbi) + needed);
 }
 
-static inline bool f2fs_is_checkpoint_ready(struct f2fs_sb_info *sbi)
+static inline int f2fs_is_checkpoint_ready(struct f2fs_sb_info *sbi)
 {
 	if (likely(!is_sbi_flag_set(sbi, SBI_CP_DISABLED)))
-		return true;
+		return 0;
 	if (likely(!has_not_enough_free_secs(sbi, 0, 0)))
-		return true;
-	return false;
+		return 0;
+	return -ENOSPC;
 }
 
 static inline bool excess_prefree_segs(struct f2fs_sb_info *sbi)
@@ -619,13 +613,16 @@ static inline int utilization(struct f2fs_sb_info *sbi)
  *                     threashold,
  * F2FS_IPU_FSYNC - activated in fsync path only for high performance flash
  *                     storages. IPU will be triggered only if the # of dirty
- *                     pages over min_fsync_blocks. (=default option)
- * F2FS_IPU_ASYNC - do IPU given by asynchronous write requests.
- * F2FS_IPU_NOCACHE - disable IPU bio cache.
- * F2FS_IPUT_DISABLE - disable IPU. (=default option in LFS mode)
+ *                     pages over min_fsync_blocks.
+ * F2FS_IPUT_DISABLE - disable IPU. (=default option)
  */
 #define DEF_MIN_IPU_UTIL	70
+#ifndef CONFIG_PRODUCT_REALME_RMX1801
+//Chunyi.Mei@PSW.BSP.FS.f2fs, 2017-10-1, Modify for performance
 #define DEF_MIN_FSYNC_BLOCKS	8
+#else/* CONFIG_PRODUCT_REALME_RMX1801 */
+#define DEF_MIN_FSYNC_BLOCKS	20
+#endif /* CONFIG_PRODUCT_REALME_RMX1801 */
 #define DEF_MIN_HOT_BLOCKS	16
 
 #define SMALL_VOLUME_SEGMENTS	(16 * 512)	/* 16GB */
@@ -637,7 +634,6 @@ enum {
 	F2FS_IPU_SSR_UTIL,
 	F2FS_IPU_FSYNC,
 	F2FS_IPU_ASYNC,
-	F2FS_IPU_NOCACHE,
 };
 
 static inline unsigned int curseg_segno(struct f2fs_sb_info *sbi,
@@ -872,9 +868,33 @@ static inline void wake_up_discard_thread(struct f2fs_sb_info *sbi, bool force)
 		}
 	}
 	mutex_unlock(&dcc->cmd_lock);
-	if (!wakeup || !is_idle(sbi, DISCARD_TIME))
+	if (!wakeup)
 		return;
 wake_up:
 	dcc->discard_wake = 1;
 	wake_up_interruptible_all(&dcc->discard_wait_queue);
 }
+
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+/*shifei.ge@TECH.Storage.FS, 2019-09-01, add for oDiscard */
+static inline void wake_up_odiscard(struct f2fs_sb_info *sbi)
+{
+	struct discard_cmd_control *dcc = SM_I(sbi)->dcc_info;
+
+	//printk("my debug %s %d:wake_up_interruptible_all\n", __func__, __LINE__);
+	dcc->odiscard_wake = 1;
+	sbi->odiscard_already_run = 1;
+	sbi->last_wp_odc_jiffies = jiffies;
+	wake_up_interruptible_all(&dcc->discard_wait_queue);
+}
+
+static inline void wake_up_otrim(struct f2fs_sb_info *sbi)
+{
+	struct discard_cmd_control *dcc = SM_I(sbi)->dcc_info;
+
+	dcc->otrim_wake = 1;
+	wake_up_interruptible_all(&dcc->discard_wait_queue);
+}
+
+#endif
+

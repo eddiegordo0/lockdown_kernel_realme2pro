@@ -139,6 +139,11 @@ static int one_hundred = 100;
 /*Huacai.Zhou@PSW.BSP.Kernel.Performance, 2018-04-28, add foreground task io opt*/
 unsigned int sysctl_fg_io_opt = 1;
 #endif /*CONFIG_PRODUCT_REALME_RMX1801*/
+#ifdef CONFIG_PRODUCT_REALME_RMX1801
+/*jason.tang@TECH.BSP.Kernel.Storage, 2019-05-20, add control ext4 fsync*/
+unsigned int sysctl_ext4_fsync_enable = 1;
+unsigned int ext4_fsync_enable_status = 0;
+#endif /*CONFIG_PRODUCT_REALME_RMX1801*/
 #ifdef CONFIG_PRINTK
 static int ten_thousand = 10000;
 #endif
