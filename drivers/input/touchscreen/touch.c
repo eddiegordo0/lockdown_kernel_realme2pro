@@ -4,11 +4,10 @@
 #include <linux/slab.h>
 #include <linux/input.h>
 #include <linux/serio.h>
-//#include "oppo_touchscreen/Synaptics/S3508/synaptics_s3508.h"
+#include "oppo_touchscreen/Synaptics/S3508/synaptics_s3508.h"
 #include "oppo_touchscreen/tp_devices.h"
 #include "oppo_touchscreen/touchpanel_common.h"
 #include "touch.h"
-#include <soc/oppo/oppo_project.h>
 #define MAX_LIMIT_DATA_LENGTH         100
 #define GTP_I2C_NAME                    "Goodix-TS"
 #define GT5688_FW_NAME                  "tp/16061/GT5688_Firmware.BIN"
