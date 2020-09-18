@@ -20,7 +20,7 @@ SRCDIR="$PWD/"
 MODULEDIR="$PWD/AnyKernel3/modules/system/lib/modules/"
 PRIMA="$PWD/AnyKernel3/modules/vendor/lib/modules/wlan.ko"
 PRONTO="$PWD/AnyKernel3/modules/vendor/lib/modules/pronto/pronto_wlan.ko"
-STRIP="$PWD/proton-clang/bin/$(echo "$(find "$PWD/proton-clang/bin" -type f -name "aarch64-*-gcc")" | awk -F '/' '{print $NF}' |\
+STRIP="$PWD/lockdown-clang/bin/$(echo "$(find "$PWD/lockdown-clang/bin" -type f -name "aarch64-*-gcc")" | awk -F '/' '{print $NF}' |\
 			sed -e 's/gcc/strip/')"
 
 
@@ -37,7 +37,7 @@ while true; do
 
 	if [ "$choice" == "1" ]; then
 	    echo -e "\n(i) Cloning toolcahins if folder not exist..."
-	    git clone https://github.com/kdrag0n/proton-clang --depth=1
+	    git clone https://gitlab.com/Vijaymalav564/lockdown-clang.git --depth=1
 	    echo -e ""start kernel building"" 
 
 echo
@@ -47,12 +47,12 @@ echo
 mkdir -p out
 export ARCH=arm64
 export SUBARCH=arm64
-export CLANG_PATH=$PWD/proton-clang/bin
+export CLANG_PATH=$PWD/lockdown-clang/bin
 export PATH=${CLANG_PATH}:${PATH}
 export CROSS_COMPILE=aarch64-linux-gnu-
 export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
-export KBUILD_BUILD_USER=VijayMalav
-export KBUILD_BUILD_HOST=Gcloud
+export KBUILD_BUILD_USER=ꪜⅈ𝕛ꪖꪗꪑꪖꪶꪖꪜ
+export KBUILD_BUILD_HOST=ᧁᥴꪶꪮꪊᦔ
 
 echo
 echo "Set DEFCONFIG"
